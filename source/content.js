@@ -44,8 +44,39 @@ function repeat(items){
 	setInterval(everything, 100);
 }
 
+function dashReplace(items){
+	volume = items.volume;
+	setInterval(function(){
+	var sources = document.querySelectorAll("source");
+	for(var i = 0; i < sources.length; i++){
+		var source = sources[i];
+		if(source.className == "audio-source"){
+			var newAud = document.createElement("audio");
+			newAud.src = source.src;
+			newAud.volume = volume;
+			newAud.setAttribute("controls","controls");
+			var cont = source.parentElement.parentElement.parentElement.parentElement;
+			cont.insertBefore(newAud, cont.childNodes[0]);
+			source.parentElement.parentElement.parentElement.remove();
+		}else{
+			var newVid = document.createElement("video");
+			newVid.src = source.src;
+			newVid.volume = volume;
+			newVid.className = "htmlVid";
+			newVid.setAttribute("controls","controls");
+			newVid.addEventListener("volumechange", function(){save(newVid.volume)});
+			newVid.addEventListener("click", function(){if(newVid.paused){newVid.play();}else{newVid.pause();}});
+			var cont = source.parentElement.parentElement.parentElement;
+			cont.insertBefore(newVid, cont.childNodes[0]);
+			source.parentElement.parentElement.remove();
+		}
+	}}, 200);
+}
 var hostname = location.hostname;
 hostname = hostname.match(/tumblr\.com/)[0];
-if(hostname == "tumblr.com"){
+if(location.href == "https://www.tumblr.com/dashboard"){
+	chrome.storage.local.get({volume:.4}, dashReplace);
+}
+else if(hostname == "tumblr.com"){
 	chrome.storage.local.get({volume:.4}, repeat);
 }
