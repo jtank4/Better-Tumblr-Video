@@ -2,7 +2,7 @@
 "manifest_version": 2,
     "name": "Better Tumblr Video",
     "description": "Replaces Tumblr's video player (that lacks volume control) with the default html5 video player (with volume control).",
-    "version": "1.0",
+    "version": "0.1",
     "content_scripts": [
         {
             "matches": [
