@@ -16,6 +16,8 @@ function place(xhr, iframes, i){
 	newVid.setAttribute("controls","controls");
 	newVid.addEventListener("volumechange", function(){save(newVid.volume)});
 	newVid.addEventListener("click", function(){if(newVid.paused){newVid.play();}else{newVid.pause();}});
+	newVid.style.minWidth = iframe.offsetWidth + "px";
+	newVid.style.minHeight = iframe.offsetHeight + "px";
 	var cont = iframe.parentElement;
 	cont.insertBefore(newVid, cont.childNodes[0]);
 	iframes[i].remove();
