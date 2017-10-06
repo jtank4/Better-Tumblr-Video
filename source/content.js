@@ -1,11 +1,11 @@
 var volume;
+var requestsDone = 0;
 
 function save(vol){
 	chrome.storage.local.set({volume:vol});
 }
 
-function place(xhr, iframes, i){
-	var iframe = iframes[i];
+function place(xhr, iframe, numFrames){
 	var result = xhr.responseText;
 	var alex = result.match(/source src\="([^"]+)/)[1]; //He asked me to put him in my code.
 	
@@ -18,32 +18,37 @@ function place(xhr, iframes, i){
 	newVid.addEventListener("click", function(){if(newVid.paused){newVid.play();}else{newVid.pause();}});
 	newVid.style.minWidth = iframe.offsetWidth + "px";
 	newVid.style.minHeight = iframe.offsetHeight + "px";
-	var cont = iframe.parentElement;
+	var cont = iframe.parentNode;
 	cont.insertBefore(newVid, cont.childNodes[0]);
-	iframes[i].remove();
+	iframe.remove();
+	requestsDone += 1;
+	if(requestsDone >= numFrames){
+		everything();
+	} //As soon as the last request finishes, call everything again.
 }
 
-function getSrc(iframes, i){
-	var iframe = iframes[i];
+function getSrc(iframe, numFrames){
 	var xhr = new XMLHttpRequest();
 	xhr.open("GET", iframe.src, true);
-	xhr.onload = function (){place(this, iframes, i);};
+	xhr.onload = function (){place(this, iframe, numFrames);};
 	xhr.send(null);
 }
 
 function everything(){
 	var iframes = document.querySelectorAll("iframe.tumblr_video_iframe");
 	var numFrames = iframes.length;
+	requestsDone = 0;
 	for (var i = 0; i < numFrames; i++) {
-		getSrc(iframes, i);
+		getSrc(iframes[i], numFrames);
 	}
-	
+	if(numFrames == 0){ //If there were no requests made, wait a bit before running again.
+		setTimeout(everything, 100);
+	}
 }
 
 function repeat(items){
 	volume = items.volume;
 	everything();
-	setInterval(everything, 100);
 }
 
 function dashReplace(items){
@@ -74,11 +79,10 @@ function dashReplace(items){
 		}
 	}}, 200);
 }
-var hostname = location.hostname;
-hostname = hostname.match(/tumblr\.com/)[0];
+
 if(location.href == "https://www.tumblr.com/dashboard"){
 	chrome.storage.local.get({volume:.4}, dashReplace);
 }
-else if(hostname == "tumblr.com"){
+else{
 	chrome.storage.local.get({volume:.4}, repeat);
 }
