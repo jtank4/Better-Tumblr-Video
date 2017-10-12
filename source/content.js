@@ -8,14 +8,16 @@ function save(vol){
 function place(xhr, iframe, numFrames){
 	var result = xhr.responseText;
 	var alex = result.match(/source src\="([^"]+)/)[1]; //He asked me to put him in my code.
+	var poster = result.match(/poster\=["']([^"']+)/)[1];
 	
 	var newVid = document.createElement("video");
 	newVid.src = alex;
+	newVid.poster = poster;
 	newVid.volume = volume;
 	newVid.className = "htmlVid";
 	newVid.setAttribute("controls","controls");
-	newVid.addEventListener("volumechange", function(){save(newVid.volume)});
-	newVid.addEventListener("click", function(){if(newVid.paused){newVid.play();}else{newVid.pause();}});
+	newVid.addEventListener("volumechange", function(){save(this.volume)});
+	newVid.addEventListener("click", function(){if(this.paused){this.play();}else{this.pause();}});
 	newVid.style.minWidth = iframe.offsetWidth + "px";
 	newVid.style.minHeight = iframe.offsetHeight + "px";
 	var cont = iframe.parentNode;
@@ -65,22 +67,35 @@ function dashReplace(items){
 			var cont = source.parentElement.parentElement.parentElement.parentElement;
 			cont.insertBefore(newAud, cont.childNodes[0]);
 			source.parentElement.parentElement.parentElement.remove();
-		}else{
-			var newVid = document.createElement("video");
-			newVid.src = source.src;
-			newVid.volume = volume;
-			newVid.className = "htmlVid";
-			newVid.setAttribute("controls","controls");
-			newVid.addEventListener("volumechange", function(){save(newVid.volume)});
-			newVid.addEventListener("click", function(){if(newVid.paused){newVid.play();}else{newVid.pause();}});
-			var cont = source.parentElement.parentElement.parentElement;
-			cont.insertBefore(newVid, cont.childNodes[0]);
-			source.parentElement.parentElement.remove();
+		}else if(source.src && source.parentElement.tagName == "VIDEO" && source.parentElement.className == "vjs-tech"){
+			var children = source.parentElement.parentElement.childNodes;
+			var poster;
+			for(j of children){
+				if(j.className == "vjs-poster"){
+					poster = j.style.backgroundImage.match(/url\("([^"]+)/)[1];
+					if(poster){
+						break;
+					}
+				}
+			}
+			if(poster){
+				var newVid = document.createElement("video");
+				newVid.poster = poster;
+				newVid.src = source.src;
+				newVid.volume = volume;
+				newVid.className = "htmlVid";
+				newVid.setAttribute("controls","controls");
+				newVid.addEventListener("volumechange", function(){save(this.volume)});
+				newVid.addEventListener("click", function(){if(this.paused){this.play();}else{this.pause();}});
+				var cont = source.parentElement.parentElement.parentElement;
+				cont.insertBefore(newVid, cont.childNodes[0]);
+				source.parentElement.parentElement.remove();
+			}
 		}
-	}}, 200);
+	}}, 100);
 }
 
-if(location.href == "https://www.tumblr.com/dashboard"){
+if(location.href == "https://www.tumblr.com/dashboard" || location.href.includes("https://www.tumblr.com/explore")){
 	chrome.storage.local.get({volume:.4}, dashReplace);
 }
 else{
