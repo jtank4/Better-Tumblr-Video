@@ -1,5 +1,6 @@
 var volume;
 var requestsDone = 0;
+var player;
 
 function save(vol){
 	chrome.storage.local.set({volume:vol});
@@ -17,11 +18,17 @@ function place(xhr, iframe, numFrames){
 	newVid.className = "htmlVid";
 	newVid.setAttribute("controls","controls");
 	newVid.addEventListener("volumechange", function(){save(this.volume)});
-	newVid.addEventListener("click", function(){if(this.paused){this.play();}else{this.pause();}});
 	newVid.style.minWidth = iframe.offsetWidth + "px";
 	newVid.style.minHeight = iframe.offsetHeight + "px";
 	var cont = iframe.parentNode;
-	cont.insertBefore(newVid, cont.childNodes[0]);
+	var vid = cont.insertBefore(newVid, cont.childNodes[0]);
+	
+	//Chrome 67, in an aggresively ignorant decision,
+	//removed the volume bar from the default player, so now we must use plyr video player.
+	//Note for anyone looking to use plyr for multiple videos, here's one way to do it.
+	player = new Plyr(vid, {});
+	window.player = player;
+	
 	iframe.remove();
 	requestsDone += 1;
 	if(requestsDone >= numFrames){
@@ -88,7 +95,12 @@ function dashReplace(items){
 				newVid.addEventListener("volumechange", function(){save(this.volume)});
 				newVid.addEventListener("click", function(){if(this.paused){this.play();}else{this.pause();}});
 				var cont = source.parentElement.parentElement.parentElement;
-				cont.insertBefore(newVid, cont.childNodes[0]);
+				var vid = cont.insertBefore(newVid, cont.childNodes[0]);
+				
+				//Make Plyr the video player 
+				player = new Plyr(vid, {});
+				window.player = player;
+				
 				source.parentElement.parentElement.remove();
 			}
 		}
@@ -96,8 +108,8 @@ function dashReplace(items){
 }
 
 if(location.href == "https://www.tumblr.com/dashboard" || location.href.includes("https://www.tumblr.com/explore")){
-	chrome.storage.local.get({volume:.4}, dashReplace);
+	chrome.storage.local.get({volume:.4}, dashReplace); //These are done separately as these videos are not in iframes
 }
 else{
-	chrome.storage.local.get({volume:.4}, repeat);
+	chrome.storage.local.get({volume:.4}, repeat); //These videos are in iframes
 }
