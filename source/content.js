@@ -93,7 +93,6 @@ function dashReplace(items){
 				newVid.className = "htmlVid";
 				newVid.setAttribute("controls","controls");
 				newVid.addEventListener("volumechange", function(){save(this.volume)});
-				newVid.addEventListener("click", function(){if(this.paused){this.play();}else{this.pause();}});
 				var cont = source.parentElement.parentElement.parentElement;
 				var vid = cont.insertBefore(newVid, cont.childNodes[0]);
 				
