@@ -106,7 +106,7 @@ function dashReplace(items){
 	}}, 100);
 }
 
-if(location.href == "https://www.tumblr.com/dashboard" || location.href.includes("https://www.tumblr.com/explore")){
+if(location.href == "https://www.tumblr.com/dashboard" || location.href.includes("https://www.tumblr.com/explore") || location.href.includes("https://www.tumblr.com/likes")){
 	chrome.storage.local.get({volume:.4}, dashReplace); //These are done separately as these videos are not in iframes
 }
 else{
