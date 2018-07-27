@@ -1,4 +1,5 @@
 var volume;
+var usePlyr;
 var requestsDone = 0;
 var player;
 
@@ -26,8 +27,9 @@ function place(xhr, iframe, numFrames){
 	//Chrome 67, in an aggresively ignorant decision,
 	//removed the volume bar from the default player, so now we must use plyr video player.
 	//Note for anyone looking to use plyr for multiple videos, here's one way to do it.
-	player = new Plyr(vid, {});
-	window.player = player;
+	if(usePlyr){
+		player = new Plyr(vid, {});
+	}
 	
 	iframe.remove();
 	requestsDone += 1;
@@ -55,13 +57,7 @@ function everything(){
 	}
 }
 
-function repeat(items){
-	volume = items.volume;
-	everything();
-}
-
-function dashReplace(items){
-	volume = items.volume;
+function dashReplace(){
 	setInterval(function(){
 	var sources = document.querySelectorAll("source");
 	for(var i = 0; i < sources.length; i++){
@@ -72,7 +68,9 @@ function dashReplace(items){
 			newAud.volume = volume;
 			newAud.setAttribute("controls","controls");
 			var cont = source.parentElement.parentElement.parentElement.parentElement;
-			cont.insertBefore(newAud, cont.childNodes[0]);
+			var aud = cont.insertBefore(newAud, cont.childNodes[0]);
+			//Make Plyr the audio player 
+			if(usePlyr){player = new Plyr(aud, {});}
 			source.parentElement.parentElement.parentElement.remove();
 		}else if(source.src && source.parentElement.tagName == "VIDEO" && source.parentElement.className == "vjs-tech"){
 			var children = source.parentElement.parentElement.childNodes;
@@ -97,8 +95,7 @@ function dashReplace(items){
 				var vid = cont.insertBefore(newVid, cont.childNodes[0]);
 				
 				//Make Plyr the video player 
-				player = new Plyr(vid, {});
-				window.player = player;
+				if(usePlyr){player = new Plyr(vid, {});}
 				
 				source.parentElement.parentElement.remove();
 			}
@@ -106,9 +103,20 @@ function dashReplace(items){
 	}}, 100);
 }
 
+function setSettings(items, afterwards){
+	volume = items.volume;
+	usePlyr = items.usePlyr;
+	if(afterwards == "repeat"){
+		everything();
+	}else if(afterwards == "dashReplace"){
+		dashReplace();
+	}
+}
+	
+var reqs = {"usePlyr":true, "volume":.4};
 if(location.href == "https://www.tumblr.com/dashboard" || location.href.includes("https://www.tumblr.com/explore") || location.href.includes("https://www.tumblr.com/likes")){
-	chrome.storage.local.get({volume:.4}, dashReplace); //These are done separately as these videos are not in iframes
+	chrome.storage.local.get(reqs, items => setSettings(items, "dashReplace")); //These are done separately as these videos are not in iframes
 }
 else{
-	chrome.storage.local.get({volume:.4}, repeat); //These videos are in iframes
+	chrome.storage.local.get(reqs, items => setSettings(items,"repeat")); //These videos are in iframes
 }
